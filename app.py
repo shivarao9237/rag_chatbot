@@ -1,6 +1,7 @@
 # app.py
 import streamlit as st
 import os
+import tempfile
 from src.data_loader import load_all_documents
 from src.vectorstore import FaissVectorStore
 from src.search import RAGSearch
@@ -22,13 +23,16 @@ with st.sidebar:
     )
     if uploaded_files and st.button("Process", type="primary"):
         with st.spinner("Processing PDFs..."):
-            # Save files to data/ folder
-            os.makedirs("data", exist_ok=True)
+            # Save files to /tmp folder (writable in Docker)
+            save_dir = "/tmp/data"
+            os.makedirs(save_dir, exist_ok=True)
             for f in uploaded_files:
-                with open(f"data/{f.name}", "wb") as out:
+                with open(os.path.join(save_dir, f.name), "wb") as out:
                     out.write(f.read())
             # Build RAG pipeline
-            st.session_state.rag_search = RAGSearch()
+            st.session_state.rag_search = RAGSearch(
+                persist_dir="/tmp/faiss_store"
+            )
             st.session_state.chat_history = []
         st.success("Ready! Ask your questions.")
 
