@@ -2,8 +2,6 @@
 import streamlit as st
 import os
 import tempfile
-from src.data_loader import load_all_documents
-from src.vectorstore import FaissVectorStore
 from src.search import RAGSearch
 
 st.set_page_config(page_title="RAG Chatbot", page_icon="📄")
@@ -23,15 +21,20 @@ with st.sidebar:
     )
     if uploaded_files and st.button("Process", type="primary"):
         with st.spinner("Processing PDFs..."):
-            # Save files to /tmp folder (writable in Docker)
-            save_dir = "/tmp/data"
-            os.makedirs(save_dir, exist_ok=True)
+            # Save to tempfile individually — avoids permission issues
+            saved_paths = []
             for f in uploaded_files:
-                with open(os.path.join(save_dir, f.name), "wb") as out:
-                    out.write(f.read())
-            # Build RAG pipeline
+                suffix = f".pdf"
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=suffix, dir="/tmp"
+                ) as tmp:
+                    tmp.write(f.read())
+                    saved_paths.append(tmp.name)
+
+            # Build RAG pipeline from temp paths
             st.session_state.rag_search = RAGSearch(
-                persist_dir="/tmp/faiss_store"
+                persist_dir="/tmp/faiss_store",
+                data_paths=saved_paths
             )
             st.session_state.chat_history = []
         st.success("Ready! Ask your questions.")
@@ -40,12 +43,10 @@ with st.sidebar:
 if not st.session_state.rag_search:
     st.info("👈 Upload PDFs in the sidebar to get started")
 else:
-    # Show chat history
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
-    # Question input
     question = st.chat_input("Ask a question about your documents...")
     if question:
         st.session_state.chat_history.append(
