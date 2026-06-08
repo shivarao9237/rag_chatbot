@@ -21,4 +21,4 @@ https://github.com/shivarao9237/rag_chatbot
 - FAISS — vector search
 - Groq LLaMA 3.3 70B — LLM
 - LangChain — document processing
-- Streamlit — UI
+- Streamlit — UI 
