@@ -26,14 +26,15 @@ with st.sidebar:
             for f in uploaded_files:
                 suffix = f".pdf"
                 with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=suffix, dir="/tmp"
+                    delete=False, suffix=".pdf", dir=tempfile.gettempdir()
                 ) as tmp:
                     tmp.write(f.read())
                     saved_paths.append(tmp.name)
 
             # Build RAG pipeline from temp paths
+            import os
             st.session_state.rag_search = RAGSearch(
-                persist_dir="/tmp/faiss_store",
+                persist_dir=os.path.join(tempfile.gettempdir(), "faiss_store"),
                 data_paths=saved_paths
             )
             st.session_state.chat_history = []

@@ -8,3 +8,6 @@ sentence-transformers
 faiss-cpu
 pypdf
 python-dotenv
+fastapi
+uvicorn[standard]
+python-multipart
